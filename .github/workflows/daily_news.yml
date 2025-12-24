@@ -5,7 +5,7 @@ on:
   schedule:
     # GitHub 使用 UTC 時間。台灣是 UTC+8。
     # 所以 UTC 00:00 = 台灣早上 08:00
-    - cron: '0 0 * * *'
+    - cron: '30 22 * * *'
   # 讓我們可以手動按按鈕測試
   workflow_dispatch:
 
