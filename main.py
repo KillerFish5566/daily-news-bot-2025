@@ -100,13 +100,13 @@ def search_news(target_date, max_results_per_keyword=3):
 
 def generate_summary(news_list, target_date):
     """
-    使用 Gemini 生成報告
+    使用 Gemini 生成專業報告 (包含自動降級機制)
     """
     if not news_list:
         return None
 
     date_str = target_date.strftime("%Y/%m/%d")
-    logger.info("🧠 Gemini 正在撰寫報告...")
+    logger.info("🧠 Gemini 正在構思新聞報告...")
 
     prompt = (
         f"今天是 {date_str}。\n"
@@ -116,12 +116,39 @@ def generate_summary(news_list, target_date):
         "1. 絕對不要包含娛樂、明星八卦、體育賽事、或是純粹的犯罪社會新聞。\n"
         "2. 如果資料中都是垃圾新聞，請直接回答「今日無重大地緣政治或科學新聞」。\n\n"
         "✅ 撰寫要求：\n"
-        "1. 請挑選 3 則最具影響力的「地緣政治變動」或「重大科學發現」。\n"
+        "1. 請挑選 5 則最具影響力的「地緣政治變動」或「重大科學發現」。\n"
         "2. 語氣要專業、客觀、精煉，像是在寫給 CEO 或研究員看的簡報。\n"
         "3. 格式：【領域標籤】標題 (換行) 深度摘要 (換行) 🔗 連結。\n"
         "4. 結尾請給一句關於「洞察世界」的專業短語。\n\n"
         "原始新聞資料：\n" + "\n---\n".join(news_list)
     )
+
+    # 定義模型優先順序
+    # 優先嘗試 Pro (品質最好)，失敗則退回 Flash (最穩)
+    # 你可以把 'gemini-1.5-pro' 換成 'gemini-1.5-pro-002' 試試看，這通常是品質之王
+    candidate_models = ['gemini-1.5-pro-002', 'gemini-flash-latest']
+
+    for model_name in candidate_models:
+        try:
+            logger.info(f"🧪 嘗試使用模型: {model_name} 進行撰寫...")
+            
+            response = client.models.generate_content(
+                model=model_name, 
+                contents=prompt,
+                config=types.GenerateContentConfig(
+                    temperature=0.3
+                )
+            )
+            logger.info(f"✨ 成功使用 {model_name} 完成報告！")
+            return response.text
+            
+        except Exception as e:
+            logger.warning(f"⚠️ 模型 {model_name} 執行失敗 (可能是額度不足或不支援): {e}")
+            logger.info("🔄 正在切換至下一個備援模型...")
+            continue # 繼續迴圈，試下一個模型
+
+    logger.error("❌ 所有模型皆嘗試失敗，無法生成報告。")
+    return None
 
     try:
         # 使用 2.0-flash 
