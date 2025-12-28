@@ -10,7 +10,7 @@ warnings.filterwarnings("ignore", category=UserWarning, module="linebot")
 # ddgs 的警告已經透過換套件解決了，所以這裡不需要再濾 duckduckgo
 
 # 引入新版搜尋套件
-from ddgs import DDGS
+from duckduckgo_search import DDGS
 
 # 引入 Google GenAI SDK
 from google import genai
